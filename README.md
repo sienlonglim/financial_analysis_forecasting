@@ -7,6 +7,8 @@ The other script performs a K means clustering on the portfolio to determine dif
 The following features are used in K means clustering:
 1. Market cap
 2. Revenue
+3. Profit Margin
+4. 52 Week Change
 
 
 
