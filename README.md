@@ -12,7 +12,8 @@ The following features are used in K means clustering:
 2. Revenue
 3. Profit Margin
 4. 52 Week Change
+5. Quarterly Earnings Growth (yoy)
 
-It then compares it with one's portfolio for recommendation for diversification.
+It then compares it with one's portfolio for recommendation to diversify.
 
 
