@@ -6,7 +6,7 @@
 
 # Part 2 S&P and personal portfolio segment analysis with recommendations:
 
-This script performs a K means clustering on the S&P constituents to determine different groups of companies. 
+This script performs a K-means clustering on the S&P constituents to determine different groups of companies. 
 The following features are used in K means clustering:
 1. Market cap
 2. Revenue
