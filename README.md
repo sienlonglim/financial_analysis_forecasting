@@ -1,6 +1,6 @@
 # Part 1 Web scrapper:
 
-<p>The web scrapper in BeautifulSoup 4 takes scraps info from the yahoo finance statistics page.</p>
+<p>The web scrapper in BeautifulSoup 4 scraps info from the yahoo finance statistics page.</p>
 <a href = "https://finance.yahoo.com/quote/TSLA/key-statistics?p=TSLA"><img src="sample.JPG"></a>
 <p>The two sets of data to be scrapped consists of the S&P constituents and one's personal portfolio.</p>
 
