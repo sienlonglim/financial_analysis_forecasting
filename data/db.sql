@@ -1,12 +1,10 @@
 CREATE TABLE companies (
-    `ID` INT NOT NULL AUTO_INCREMENT,
     `Ticker` VARCHAR(5) NOT NULL,
     `NAME` TEXT NOT NULL,
-    PRIMARY KEY (`ID`, `Ticker`)
+    PRIMARY KEY (`Ticker`)
 );
 
 CREATE TABLE statistics (
-    `ID` INT NOT NULL AUTO_INCREMENT,
     `DATE` DATE NOT NULL DEFAULT CURRENT_DATE(),
     `Ticker` VARCHAR(5) NOT NULL,
     `Market Cap (B)` FLOAT NOT NULL,
@@ -69,5 +67,5 @@ CREATE TABLE statistics (
     `Last Split Date` DATE ,
     `Fiscal Year Ends` DATE ,
     `Most Recent Quarter (mrq)` DATE ,
-    PRIMARY KEY (`ID`, `DATE`, `Ticker`)
+    PRIMARY KEY (`DATE`, `Ticker`)
 );
