@@ -1,6 +1,11 @@
+CREATE DATABASE IF NOT EXISTS yfinance;
+
+USE yfinance;
+
 CREATE TABLE companies (
-    `Ticker` VARCHAR(5) NOT NULL,
-    `NAME` TEXT NOT NULL,
+    `ticker` VARCHAR(5) NOT NULL,
+    `name` TEXT NOT NULL,
+    `index` VARCHAR(10),
     PRIMARY KEY (`Ticker`)
 );
 
