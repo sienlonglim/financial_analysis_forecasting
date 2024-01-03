@@ -1,4 +1,4 @@
-requests_cache
+requests
 bs4
-sklearn
+scikit-learn
 seaborn
