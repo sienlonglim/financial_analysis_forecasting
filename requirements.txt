@@ -1,4 +1,7 @@
 requests
 bs4
+lxml
 scikit-learn
 seaborn
+statsmodels
+matplotlib
