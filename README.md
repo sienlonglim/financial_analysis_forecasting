@@ -3,8 +3,7 @@
 2. Consider other databases (DuckDB, PostgresSQL)
 
 # Part 1 Time Series analysis and forecasting:
-This script aims to perform ARIMA to analyse stock prices and forecast into the future to identify possible trend.
-It will also help detrend the data
+This script aims to perform SARIMA to analyse stock prices and forecast into the future to identify possible trend.
 
 # Part 2 Web scrapper:
 
@@ -28,3 +27,7 @@ The identified clusters are compared with one's portfolio for comparison.
 20240103:
 1. Refactored code and directory to modularise scrapper
 2. Renamed project
+
+20240107:
+1. Completed modularisation of YfScrapper
+2. Completed learning on time series (ARIMA, SARIMA)
