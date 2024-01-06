@@ -1,14 +1,21 @@
 import re
 import requests
-import time
 import pandas as pd
 import numpy as np
 from bs4 import BeautifulSoup
 from datetime import datetime
 from io import StringIO
+from collections.abc import Iterable 
+from modules.utils import logger
 
-class YfScrapper():    
+class YfScrapper():
+    '''
+    Scrapper object to get data from Yahoo Finance, can contain multiple data for different tickers
+    '''    
     def __init__(self):
+        '''
+        Sets the headers to be used
+        '''
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
             'Accept-Language': 'en-US,en;q=0.5',
@@ -44,16 +51,25 @@ class YfScrapper():
             'Levered Free Cash Flow (ttm)' : 'Levered Free Cash Flow (ttm) (B)'
         }
         self.tickers = {}
+        self.compiled_dataframes = None
 
     def add_tickers(self, tickers):
         '''
         Adds a list of tickers to the class instance
+        Parameters:
+            tickers (list[str] or str) : the ticker symbols to be added
+
         '''
-        count = 0
-        for ticker in tickers:
+        if isinstance(tickers, str):
             self.tickers.setdefault(ticker)
-            count +=1
-        print(f'Added {count} tickers')
+        elif isinstance(tickers, Iterable):
+            count = 0
+            for ticker in tickers:
+                self.tickers.setdefault(ticker)
+                count +=1
+            logger.info(f'Added {count} tickers')
+        else:
+            raise TypeError('tickers must be str or iterable list of strings')
     
     def _mapper(self, row):
             '''Helper function to map or return original values'''
@@ -62,23 +78,28 @@ class YfScrapper():
     def get_ticker_stats(self, tickers, clean_df=True):  
         '''
         Function take takes in a list of tickers and scraps the yahoo stats into a dictionary.
-        Input:
-            tickers : if 'all', will scrap for all the stored tickers, otherwise provide a list of tickers to scrap or a ticker
+        Parameters:
+            tickers (str or iterable list of strings): 
+                If 'all', will scrap for all the stored tickers, otherwise provide a list of tickers to scrap or a ticker
+            clean_df (bool):
+                option whether to clean the data
         '''
         if isinstance(tickers, str):
-            if tickers == 'all':
+            if tickers.upper() == 'ALL':
                 tickers = self.tickers
+            elif tickers.upper().startswith('S&P'):
+                tickers = self.get_SP500_data(tickers_only=True)
             else:
                 tickers = list(tickers)
-        elif isinstance(tickers, list) or isinstance(tickers, tuple):
+        elif isinstance(tickers, Iterable):
             pass
         else:
-            raise TypeError('tickers must be an iterable object of strings')
+            raise TypeError('tickers must be str or iterable list of strings')
         
         for ticker in tickers:
             url = f'https://finance.yahoo.com/quote/{ticker}/key-statistics?p={ticker}'
             resp = requests.get(url, headers = self.headers)
-            print(f'{ticker} status - {resp.status_code}')
+            logger.info(f'{ticker} status - {resp.status_code}')
             soup = BeautifulSoup(resp.text, "html.parser")
             name = soup.find("h1").text
 
@@ -102,7 +123,7 @@ class YfScrapper():
             df.columns = updated_columns
             if clean_df:
                 df = self.clean_df(df)
-
+            logger.info(f'\t{df.iloc[0,0]} : {df.iloc[0,1]}')
             # Save to the object variable
             self.tickers[ticker] = df
 
@@ -113,7 +134,8 @@ class YfScrapper():
         2. Clean stocksplit ratios 
         3. Recast dates into datetime format
 
-        Inputs:
+        Parameters:
+            df (pd.DataFrame) - dataframe for cleaning
         '''
         for col in df.columns:
             if col in ['Dividend Date', 'Ex-Dividend Date', 'Last Split Date', 'Fiscal Year Ends', 'Most Recent Quarter (mrq)']:
@@ -165,9 +187,52 @@ class YfScrapper():
         else:
             return x
     
-    def combine_data(self):
-        dfs = self.tickers.values()
+    def compile_dataframes(self):
+        '''
+        Function to concatenate all the ticker dataframe together
+        '''
+        dfs = [ticker for ticker in self.tickers.values() if isinstance(ticker, pd.DataFrame)]
         df = pd.concat([*dfs])
+        self.compiled_dataframes = df
         return df
         
+    def get_SP500_data(self, tickers_only: bool=False, url: str='https://www.slickcharts.com/sp500', tableclass: str ="table-responsive"):
+        '''
+        Function to scrap the latest S&P data from a website containing S&P data
+        Inputs:
+            tickers_only: boolean - whether to return the ticker symbols only, or the whole dataframe
+            url: string - website url
+            tableclass: string - tableclass containing the data
+        Returns:
+            pd.DataFrame or list
+        '''
+        resp = requests.get(url, headers = self.headers)
+        soup = BeautifulSoup(resp.text, "html.parser")
+        table = soup.find(class_ = tableclass)
+
+        table_head = table.find('thead')
+        header_list = [th.text.strip() for th in table_head.find_all('th')]
+
+        table_body = table.find('tbody')
+        rows = table_body.find_all('tr')
+        sp_data = []
+        for row in rows:
+            cols = row.find_all('td')
+            cols = [ele.text.strip() for ele in cols]
+            sp_data.append([ele for ele in cols if ele]) # Get rid of empty values
+
+        sp_df = pd.DataFrame(np.array(sp_data))
+        sp_df.columns = header_list
+        sp_df = sp_df.drop('#', axis=1)
+        sp_df['Symbol'].replace(regex={r'[\.]': '-'}, inplace=True) #tickers need to have - instead of . for proper search on yahoo
+        logger.info(f'Number of S&P constituent data obtained: {len(sp_df)}')
+        if tickers_only:
+            return sp_df['Symbol'].to_list()
+        else:
+            return sp_df
+
+    def save(self, filepath):
+        if self.compiled_dataframes:
+            self.compiled_dataframes.to_csv(filepath + '.csv')
+            logger.info(f'File {filepath} saved!')
 
