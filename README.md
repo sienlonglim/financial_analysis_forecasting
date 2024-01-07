@@ -1,9 +1,13 @@
 ## Upcoming works
 1. Consider if Pydantic would be useful here, if so, try it out
 2. Consider other databases (DuckDB, PostgresSQL)
+3. Add RMSE or other metrics into TS validation
+4. Optimize for SARIMA parameters
 
 # Part 1 Time Series analysis and forecasting:
-This script aims to perform SARIMA to analyse stock prices and forecast into the future to identify possible trend.
+This script aims to perform SARIMA to analyse stock prices and forecast into the future with the following purposes:
+1. Identify near-term price movement trends
+2. Determine optimal actions for maximum gain
 
 # Part 2 Web scrapper:
 
@@ -24,10 +28,20 @@ The following features are used in K means clustering:
 The identified clusters are compared with one's portfolio for comparison.
 
 ## Improvement logs:
-20240103:
-1. Refactored code and directory to modularise scrapper
-2. Renamed project
+20240108:
+1. Modularising Forecaster on notebook
+2. Added functions to 
+    - forecast
+    - validate forecast
+    - plot forecast
+    - determine single buy and sell for maximum profit within forecast
 
 20240107:
 1. Completed modularisation of YfScrapper
 2. Completed learning on time series (ARIMA, SARIMA)
+
+20240103:
+1. Refactored code and directory to modularise scrapper
+2. Renamed project
+
+
