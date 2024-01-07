@@ -9,6 +9,7 @@ This script aims to perform SARIMA to analyse stock prices and forecast into the
 1. Identify near-term price movement trends
 2. Determine optimal actions for maximum gain
 <img src="images/validation.png">
+<img src="images/forecast.png">
 
 # Part 2 Web scrapper:
 
@@ -28,7 +29,7 @@ The following features are used in K means clustering:
 
 The identified clusters are compared with one's portfolio for comparison.
 
-## Improvement logs:
+# Improvement logs:
 20240108:
 1. Modularising Forecaster on notebook
 2. Added functions to 
