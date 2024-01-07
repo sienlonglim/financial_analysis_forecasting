@@ -8,6 +8,7 @@
 This script aims to perform SARIMA to analyse stock prices and forecast into the future with the following purposes:
 1. Identify near-term price movement trends
 2. Determine optimal actions for maximum gain
+<img src="images/validation.png">
 
 # Part 2 Web scrapper:
 
