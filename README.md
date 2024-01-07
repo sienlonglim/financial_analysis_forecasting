@@ -27,7 +27,11 @@ The following features are used in K means clustering:
 4. 52 Week Change
 5. Quarterly Earnings Growth (yoy)
 
+<img src="images/s&p_clusters.jpg">
+
 The identified clusters are compared with one's portfolio for comparison.
+
+<img src="images/cluster_differences.jpg">
 
 # Improvement logs:
 20240108:
