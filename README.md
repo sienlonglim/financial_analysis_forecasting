@@ -1,8 +1,6 @@
 ## Upcoming works
-1. Consider if Pydantic would be useful here, if so, try it out
-2. Consider other databases (DuckDB, PostgresSQL)
-3. Add RMSE or other metrics into TS validation
-4. Optimize for SARIMA parameters
+1. To build time series forecaster onto Streamlit next
+2. Consider use of other databases (DuckDB, PostgresSQL) for learning
 
 # Part 1 Time Series analysis and forecasting:
 This script aims to perform SARIMA to analyse stock prices and forecast into the future with the following purposes:
@@ -34,6 +32,10 @@ The identified clusters are compared with one's portfolio for comparison.
 <img src="images/cluster_differences.jpg">
 
 # Improvement logs:
+20240110:
+1. Added RMSE or AIC into TS validation
+2. Optimized for SARIMA parameters, using auto_arima and further analysis
+
 20240108:
 1. Modularising Forecaster on notebook
 2. Added functions to 
