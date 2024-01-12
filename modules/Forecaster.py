@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Iterable
 import yfinance as yf
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -69,7 +69,21 @@ class Forecaster():
         else:
             raise KeyError('No such attribute, to get Ticker data, input ticker in caps')
 
-    def forecast(self, *args, **kwargs):
+    def add_tickers(self, args) -> None:
+        if isinstance(args, str):
+            if args.isupper() and len(args)<=4: 
+                self.tickers.setdefault(args)
+            else:
+                raise KeyError(f'Invalid ticker: {args}, ticker must be string and in uppercase only')
+        elif isinstance(args, Iterable):
+            for arg in args:
+                if isinstance(arg, str):
+                    if arg.isupper() and len(arg)<=4: 
+                        self.tickers.setdefault(arg)
+                    else:
+                        raise KeyError(f'Invalid ticker: {arg}, ticker must be in uppercase only')
+
+    def forecast(self, *args, **kwargs) -> None:
         '''
         Forecasts with SARIMA
         Parameters:
@@ -106,7 +120,7 @@ class Forecaster():
             forecast = model_fit.predict(start=len(df), end = len(df)+seasonal_order[-1], dynamic=False)     
             self.tickers[ticker] = {'ts': ts, 'forecast': forecast, 'model':model_fit}
 
-    def forecast_validation(self, ticker:str = None, validation_periods:int = 52, plot:bool=True, forecast_period_only = True, **kwargs):
+    def forecast_validation(self, ticker:str = None, validation_periods:int = 52, plot:bool=True, forecast_period_only = True, **kwargs) -> tuple:
         '''
         Forecasts with SARIMA
         Parameters:
@@ -208,6 +222,7 @@ class Forecaster():
                 last_profit = None
                 data = {}
                 for period, price in zip(forecast.index, forecast):
+                    price = round(price, 3)
                     data[period] = dict(current=price) # Saves every period as index
                     if not low or not high:
                         # Initial assignments
@@ -276,6 +291,7 @@ class Forecaster():
                 low = None
                 data = {}
                 for period, price in zip(forecast.index, forecast):
+                    price = round(price, 3)
                     data[period] = dict(current=price) # Saves every period as index
                     if not low:
                         # Initial assignments

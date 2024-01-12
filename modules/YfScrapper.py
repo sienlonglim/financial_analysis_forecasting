@@ -231,7 +231,7 @@ class YfScrapper():
         else:
             return sp_df
 
-    def save(self, filepath):
+    def to_csv(self, filepath):
         if self.compiled_dataframes:
             self.compiled_dataframes.to_csv(filepath + '.csv')
             logger.info(f'File {filepath} saved!')
