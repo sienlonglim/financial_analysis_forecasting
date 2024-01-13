@@ -1,4 +1,5 @@
 import re
+from typing import Any
 import requests
 import pandas as pd
 import numpy as np
@@ -53,6 +54,32 @@ class YfScrapper():
         self.tickers = {}
         self.compiled_dataframes = None
 
+    def __getattr__(self, ticker: str) -> Any:
+        '''
+        Modified dunder method to call ticker info directly from class object
+        Parameters:
+            ticker (str) : ticker to get infomation
+        Returns:
+            Pandas dataframe with ticker stats
+        '''
+        if ticker.isupper() and len(ticker)<=4: 
+            return self.tickers[ticker].T
+        else:
+            raise KeyError('No such attribute, to get Ticker data, input ticker in caps')
+
+    def __getitem__(self, ticker: str) -> Any:
+        '''
+        Modified dunder method to call ticker info directly from class object
+        Parameters:
+            ticker (str) : ticker to get infomation
+        Returns:
+            Pandas dataframe with ticker stats
+        '''
+        if ticker.isupper() and len(ticker)<=4: 
+            return self.tickers[ticker].T
+        else:
+            raise KeyError('No such attribute, to get Ticker data, input ticker in caps')
+
     def add_tickers(self, tickers):
         '''
         Adds a list of tickers to the class instance
@@ -99,7 +126,7 @@ class YfScrapper():
         for ticker in tickers:
             url = f'https://finance.yahoo.com/quote/{ticker}/key-statistics?p={ticker}'
             resp = requests.get(url, headers = self.headers)
-            logger.info(f'{ticker} status - {resp.status_code}')
+            # logger.info(f'{ticker} status - {resp.status_code}')
             soup = BeautifulSoup(resp.text, "html.parser")
             name = soup.find("h1").text
 
@@ -110,20 +137,23 @@ class YfScrapper():
             # Header cleaning
             df['metrics'].replace(regex={r'[0-9]$': ''}, inplace = True) # Removes the annotations appearing at the end of rows
             df['metrics'].replace(regex={r'(\(.+,.+\))': ''}, inplace = True) # This will specifically remove dates inside brackets, by checking for ','
-            ### UNRESOLVED, there are tow columns shares short, the latter is for prior month
+            
             df['metrics'] = df['metrics'].str.strip()
             df['metrics'] = df['metrics'].apply(self._mapper)
             df = df.T
             df.columns = df.iloc[0,:] # Update the first row as the header
             df.insert(0, 'Name', name)
             df = df.drop('metrics') # Drop the first row
+
+            # There are two columns named 'shares short', the latter is for prior month
             idx = df.columns.to_list().index('Shares Short (M) (prior month)')
             updated_columns = df.columns.to_list()
             updated_columns[idx] = 'Shares Short (M)'
+
             df.columns = updated_columns
             if clean_df:
                 df = self.clean_df(df)
-            logger.info(f'\t{df.iloc[0,0]} : {df.iloc[0,1]}')
+            logger.info(f'{df.iloc[0,0]} : {df.iloc[0,1]}')
             # Save to the object variable
             self.tickers[ticker] = df
 
