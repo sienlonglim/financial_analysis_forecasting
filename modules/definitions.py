@@ -33,3 +33,6 @@ class Definitions:
             'Operating Cash Flow (ttm)': 'Operating Cash Flow (ttm) (B)',
             'Levered Free Cash Flow (ttm)': 'Levered Free Cash Flow (ttm) (B)'
         }
+    PRICE_TYPES = ('Open', 'Close', 'High', 'Low')
+    TIME_PERIODS = ('5y', '1y', 'ytd', '10y')
+    TIME_INTERVALS = ('1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1wk', '1d', '5d', '1wk', '1mo', '3mo')

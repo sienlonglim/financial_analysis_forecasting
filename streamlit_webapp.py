@@ -1,6 +1,6 @@
 from modules.utils import logger
 from modules.YfScrapper import *
-from modules.Forecaster import *
+from modules.ForecastingModel import *
 import streamlit as st
 
 @st.cache_resource
