@@ -1,10 +1,16 @@
 from typing import Any, Iterable
-import yfinance as yf
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import yfinance as yf
 from statsmodels.tsa.arima.model import ARIMA
-from modules.utils import logger
+
+from .utils import configure_logging
+
+
+logger = configure_logging(streaming=True)
+
 
 class Forecaster():
     '''
@@ -50,7 +56,7 @@ class Forecaster():
             dictionary containing the data
             keys -> ('forecast' / 'ts / 'max_profit' / 'max_profit_history' / 'best_trades' / 'best_trades_history')
         '''
-        if ticker.isupper() and len(ticker)<=4: 
+        if ticker.isupper() and len(ticker) <= 4: 
             return self.tickers[ticker]
         else:
             raise KeyError('No such attribute, to get Ticker data, input ticker in caps')

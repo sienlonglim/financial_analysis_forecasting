@@ -1,15 +1,17 @@
 import logging
 import sys
 
-def configure_logging(file_path=None, streaming=None, level=logging.INFO):
-    '''
-    Initiates the logger
-    '''
+
+def configure_logging(
+    file_path=None,
+    streaming=None,
+    level=logging.INFO
+) -> logging.Logger:
 
     logger = logging.getLogger()
     logger.setLevel(level)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    
+
     if not len(logger.handlers):
         # Add a filehandler to output to a file
         if file_path:
@@ -25,5 +27,3 @@ def configure_logging(file_path=None, streaming=None, level=logging.INFO):
             logger.addHandler(stream_handler)    
 
     return logger
-
-logger = configure_logging('logs/app.log', streaming=True)

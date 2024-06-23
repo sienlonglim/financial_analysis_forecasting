@@ -1,106 +1,79 @@
 import re
-from typing import Any
 import requests
+from datetime import datetime
+from io import StringIO
+from collections.abc import Iterable
+from typing import Any
+
 import pandas as pd
 import numpy as np
 from bs4 import BeautifulSoup
-from datetime import datetime
-from io import StringIO
-from collections.abc import Iterable 
-from modules.utils import logger
+
+from .definitions import Definitions
+from .utils import configure_logging
+
+
+logger = configure_logging(streaming=True)
+
 
 class YfScrapper():
     '''
-    Scrapper object to get data from Yahoo Finance, can contain multiple data for different tickers
-    '''    
+    Scrapper object to get ticker stats from Yahoo Finance
+    '''
     def __init__(self):
-        '''
-        Sets the headers to be used
-        '''
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
-            }
-        self.mapping_dict = {
-            'Market Cap (intraday)' : 'Market Cap (B)',
-            'Enterprise Value' : 'Enterprise Value (B)',
-            '52-Week Change' : '52 Week Change (%)',
-            'S&P500 52-Week Change': 'S&P500 52-Week Change (%)',
-            'Avg Vol 3 month' : 'Avg Vol 3 month (B)',
-            'Avg Vol (10 day)' : 'Avg Vol 10 day (B)',
-            'Shares Short' : 'Shares Short (M) (prior month)',
-            'Forward Annual Dividend Yield': 'Forward Annual Dividend Yield (%)',
-            'Trailing Annual Dividend Yield' : 'Trailing Annual Dividend Yield (%)',
-            'Payout Ratio' : 'Payout Ratio (%)',
-            'Last Split Factor' : 'Last Split Factor (x:1)',
-            'Profit Margin' : 'Profit Margin (%)',
-            'Operating Margin (ttm)' : 'Operating Margin (ttm) (%)',
-            'Return on Assets (ttm)' : 'Return on Assets (ttm) (%)',
-            'Return on Equity (ttm)' : 'Return on Equity (ttm) (%)',
-            'Revenue (ttm)' : 'Revenue (ttm) (B)',
-            'Quarterly Revenue Growth (yoy)' : 'Quarterly Revenue Growth (yoy) (%)',
-            'Gross Profit (ttm)' : 'Gross Profit (ttm) (B)',
-            'EBITDA' : 'EBITDA (B)',
-            'Net Income Avi to Common (ttm)' : 'Net Income Avi to Common (ttm) (B)',
-            'Quarterly Earnings Growth (yoy)' : 'Quarterly Earnings Growth (yoy) (%)',
-            'Total Cash (mrq)' :'Total Cash (mrq) (B)',
-            'Total Debt (mrq)' :'Total Debt (mrq) (B)',
-            'Operating Cash Flow (ttm)' : 'Operating Cash Flow (ttm) (B)',
-            'Levered Free Cash Flow (ttm)' : 'Levered Free Cash Flow (ttm) (B)'
-        }
+        self.headers = Definitions.REQUEST_HEADER
+        self.mapping_dict = Definitions.TICKER_METRICS_MAPPING
         self.tickers = {}
         self.compiled_dataframes = None
 
     def __getattr__(self, ticker: str) -> Any:
-        '''
-        Modified dunder method to call ticker info directly from class object
-        Parameters:
-            ticker (str) : ticker to get infomation
-        Returns:
-            Pandas dataframe with ticker stats
-        '''
-        if ticker.isupper() and len(ticker)<=4: 
+        if ticker.isupper() and len(ticker) <= 4: 
             return self.tickers[ticker].T
         else:
             raise KeyError('No such attribute, to get Ticker data, input ticker in caps')
 
     def __getitem__(self, ticker: str) -> Any:
-        '''
-        Modified dunder method to call ticker info directly from class object
-        Parameters:
-            ticker (str) : ticker to get infomation
-        Returns:
-            Pandas dataframe with ticker stats
-        '''
-        if ticker.isupper() and len(ticker)<=4: 
+        if ticker.isupper() and len(ticker) <= 4: 
             return self.tickers[ticker].T
         else:
             raise KeyError('No such attribute, to get Ticker data, input ticker in caps')
 
     def add_tickers(self, tickers):
-        '''
-        Adds a list of tickers to the class instance
-        Parameters:
-            tickers (list[str] or str) : the ticker symbols to be added
-
-        '''
         if isinstance(tickers, str):
-            self.tickers.setdefault(ticker)
+            self.tickers.setdefault(tickers)
         elif isinstance(tickers, Iterable):
             count = 0
             for ticker in tickers:
                 self.tickers.setdefault(ticker)
-                count +=1
+                count += 1
             logger.info(f'Added {count} tickers')
         else:
             raise TypeError('tickers must be str or iterable list of strings')
     
     def _mapper(self, row):
-            '''Helper function to map or return original values'''
-            return self.mapping_dict.get(row, row)
+        '''Helper function to map or return original values'''
+        return self.mapping_dict.get(row, row)
+
+    @staticmethod
+    def _get_soup(
+        ticker: str,
+        headers: dict
+    ) -> Iterable[pd.DataFrame]:
+        url = f'https://finance.yahoo.com/quote/{ticker}/key-statistics?p={ticker}'
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+        return soup
+
+    @staticmethod
+    def _get_dataframes_from_soup(soup):
+        df_list = pd.read_html(StringIO(soup.prettify()))
+
+        for idx in range(len(df_list)):
+            if len(df_list[idx].columns) > 2:
+                df_list[idx] = df_list[idx].iloc[:, :2]
+                df_list[idx].columns = [0, 1]
+        return df_list
 
     def get_ticker_stats(self, tickers, clean_df=True):  
         '''
@@ -122,28 +95,26 @@ class YfScrapper():
             pass
         else:
             raise TypeError('tickers must be str or iterable list of strings')
-        
-        for ticker in tickers:
-            url = f'https://finance.yahoo.com/quote/{ticker}/key-statistics?p={ticker}'
-            resp = requests.get(url, headers = self.headers)
-            # logger.info(f'{ticker} status - {resp.status_code}')
-            soup = BeautifulSoup(resp.text, "html.parser")
-            name = soup.find("h1").text
 
-            # Read the html using pandas to parse tables directly, then concatenate them
-            dfs = pd.read_html(StringIO(resp.text))
-            df = pd.concat([*dfs])
+        for ticker in tickers:
+            soup = self._get_soup(
+                ticker=ticker,
+                headers=self.headers
+            )
+            ticker_name = soup.find("h1").text
+            df_list = self._get_dataframes_from_soup(soup)
+            df = pd.concat(df_list)
             df.columns = ['metrics', ticker]
+
             # Header cleaning
-            df['metrics'].replace(regex={r'[0-9]$': ''}, inplace = True) # Removes the annotations appearing at the end of rows
-            df['metrics'].replace(regex={r'(\(.+,.+\))': ''}, inplace = True) # This will specifically remove dates inside brackets, by checking for ','
-            
+            df['metrics'].replace(regex={r'[0-9]$': ''}, inplace=True)  # Removes the annotations appearing at the end of rows
+            df['metrics'].replace(regex={r'(\(.+,.+\))': ''}, inplace=True)  # This will specifically remove dates inside brackets, by checking for ','
             df['metrics'] = df['metrics'].str.strip()
             df['metrics'] = df['metrics'].apply(self._mapper)
             df = df.T
-            df.columns = df.iloc[0,:] # Update the first row as the header
-            df.insert(0, 'Name', name)
-            df = df.drop('metrics') # Drop the first row
+            df.columns = df.iloc[0, :]  # Update the first row as the header
+            df.insert(0, 'Name', ticker_name)
+            df = df.drop('metrics')
 
             # There are two columns named 'shares short', the latter is for prior month
             idx = df.columns.to_list().index('Shares Short (M) (prior month)')
@@ -153,7 +124,7 @@ class YfScrapper():
             df.columns = updated_columns
             if clean_df:
                 df = self.clean_df(df)
-            logger.info(f'{df.iloc[0,0]} : {df.iloc[0,1]}')
+            logger.info(f'{df.iloc[0, 0]} : {df.iloc[0, 1]}')
             # Save to the object variable
             self.tickers[ticker] = df
 
@@ -265,4 +236,3 @@ class YfScrapper():
         if self.compiled_dataframes:
             self.compiled_dataframes.to_csv(filepath + '.csv')
             logger.info(f'File {filepath} saved!')
-
