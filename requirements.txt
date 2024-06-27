@@ -8,3 +8,5 @@ matplotlib
 streamlit
 pmdarima
 yfinance
+tslearn
+h5py
